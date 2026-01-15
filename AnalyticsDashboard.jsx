@@ -27,11 +27,10 @@ const AnalyticsDashboard = ({ mode, isActive }) => {
     const pollRef = useRef(null);
     const historyRef = useRef([]);
 
-    // Standard blank state for the chart
     const getBlankData = () => ({
         labels: Array(10).fill(''),
         datasets: [{
-            label: 'Density',
+            label: 'Activity',
             data: Array(10).fill(0),
             borderColor: 'rgba(59, 130, 246, 0.1)',
             borderWidth: 1,
@@ -43,7 +42,6 @@ const AnalyticsDashboard = ({ mode, isActive }) => {
     const [chartData, setChartData] = useState(getBlankData());
 
     useEffect(() => {
-        // RESET LOGIC: When surveillance stops, clear the data
         if (!isActive) {
             if (pollRef.current) clearInterval(pollRef.current);
             setPeopleCount(0);
@@ -59,31 +57,37 @@ const AnalyticsDashboard = ({ mode, isActive }) => {
         const fetchData = async () => {
             try {
                 const res = await fetch(`http://127.0.0.1:5000${endpoint}`);
-                if (!res.ok) throw new Error("Backend Offline");
+                if (!res.ok) throw new Error("Offline");
                 const data = await res.json();
 
                 const currentCount = Number(data.people_count) || 0;
                 const currentRisk = data.risk || "LOW";
+
+                // 🔥 LOGIC: Decide what value goes on the Graph
+                let graphValue;
+                if (mode === "video") {
+                    const riskMap = { "LOW": 1, "MEDIUM": 2, "HIGH": 3 };
+                    graphValue = riskMap[currentRisk.toUpperCase()] || 1;
+                } else {
+                    graphValue = currentCount;
+                }
 
                 setPeopleCount(currentCount);
                 setRisk(currentRisk);
 
                 const time = new Date().toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' });
                 
-                // 1. Update Internal History
-                historyRef.current.push({ time, count: currentCount });
+                historyRef.current.push({ time, value: graphValue });
                 if (historyRef.current.length > 10) historyRef.current.shift();
 
-                // 2. Update Logs
-                const newLog = `[${time}] TRK_OBJ: ${currentCount} | RSK_LVL: ${currentRisk}`;
+                const newLog = `[${time}] ${mode.toUpperCase()} > ${currentRisk} (Val: ${graphValue})`;
                 setLogs(prev => [newLog, ...prev].slice(0, 6));
 
-                // 3. Update Chart State
                 setChartData({
                     labels: historyRef.current.map(d => d.time),
                     datasets: [{
-                        label: 'Crowd Density',
-                        data: historyRef.current.map(d => d.count),
+                        label: mode === 'video' ? 'Risk Level' : 'People Count',
+                        data: historyRef.current.map(d => d.value),
                         borderColor: '#3b82f6',
                         backgroundColor: (context) => {
                             const canvas = context.chart.ctx;
@@ -96,28 +100,19 @@ const AnalyticsDashboard = ({ mode, isActive }) => {
                         tension: 0.4,
                         fill: true,
                         pointRadius: 4,
-                        pointBackgroundColor: '#3b82f6',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2
+                        pointBackgroundColor: '#3b82f6'
                     }]
                 });
-            } catch (err) {
-                console.warn("Sync error:", err.message);
-            }
+            } catch (err) { console.warn("Sync error"); }
         };
 
-        // Immediate first fetch, then interval
         fetchData();
         pollRef.current = setInterval(fetchData, 1000);
-
-        return () => {
-            if (pollRef.current) clearInterval(pollRef.current);
-        };
+        return () => { if (pollRef.current) clearInterval(pollRef.current); };
     }, [mode, isActive]);
 
     return (
         <div className="w-full max-w-7xl mx-auto mt-6 px-6 py-8 bg-slate-900/20 backdrop-blur-xl rounded-[32px] border border-white/5 shadow-2xl">
-            {/* TOP HEADER */}
             <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
                 <div>
                     <h2 className="text-2xl font-black text-white tracking-tighter italic">INTELLIGENCE UNIT</h2>
@@ -129,63 +124,75 @@ const AnalyticsDashboard = ({ mode, isActive }) => {
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-[10px] text-slate-500 font-mono uppercase">Feed Mode</p>
+                    <p className="text-[10px] text-slate-500 font-mono uppercase">Dashboard Mode</p>
                     <p className="text-xs font-bold text-blue-400 uppercase tracking-widest">{mode}</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* KEY METRICS */}
                 <div className="lg:col-span-1 flex flex-col gap-4">
                     <FeatureCard 
                         icon="⚠️" 
                         title="Risk Analysis" 
                         content={risk} 
-                        color={risk === "HIGH" ? "text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]" : isActive ? "text-blue-400" : "text-slate-600"} 
-                        desc="Crowd density / movement risk" 
+                        color={risk === "HIGH" ? "text-red-500" : isActive ? "text-blue-400" : "text-slate-600"} 
+                        desc="Threat Assessment" 
                     />
-                    <FeatureCard 
-                        icon="👁️" 
-                        title="Detected Units" 
-                        content={peopleCount} 
-                        color={isActive ? "text-white" : "text-slate-600"} 
-                        desc="Real-time object tracking" 
-                    />
+                    {/* Only show "Detected Units" card if we are in Live Mode */}
+                    {mode === 'live' && (
+                        <FeatureCard 
+                            icon="👁️" 
+                            title="Detected Units" 
+                            content={peopleCount} 
+                            color={isActive ? "text-white" : "text-slate-600"} 
+                            desc="Real-time object tracking" 
+                        />
+                    )}
                 </div>
 
-                {/* VISUAL CHART */}
                 <div className="lg:col-span-2 bg-slate-950/40 border border-white/5 rounded-3xl p-6 h-[320px] relative">
                     <Line 
                         data={chartData} 
                         options={{
                             responsive: true, 
                             maintainAspectRatio: false,
-                            animation: { duration: 400 },
                             plugins: { legend: { display: false } },
                             scales: { 
-                                x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 9, family: 'monospace' } } },
+                                x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 9 } } },
                                 y: { 
                                     beginAtZero: true, 
-                                    suggestedMax: 8, 
+                                    // Adjust scale based on mode
+                                    suggestedMax: mode === 'video' ? 4 : 10,
                                     grid: { color: 'rgba(255,255,255,0.03)' }, 
-                                    ticks: { color: '#475569', font: { size: 9, family: 'monospace' } } 
+                                    ticks: { 
+                                        color: '#475569', 
+                                        stepSize: 1,
+                                        callback: function(value) {
+                                            if (mode === 'video') {
+                                                if (value === 1) return 'LOW';
+                                                if (value === 2) return 'MED';
+                                                if (value === 3) return 'HIGH';
+                                                return '';
+                                            }
+                                            return value;
+                                        }
+                                    } 
                                 }
                             }
                         }} 
                     />
                 </div>
 
-                {/* LOG TERMINAL */}
                 <div className="lg:col-span-1 bg-black/40 border border-white/5 rounded-3xl p-5 flex flex-col h-[320px]">
                     <h4 className="text-[10px] text-blue-500 font-black tracking-widest mb-4 uppercase">System Logs</h4>
                     <div className="flex-1 space-y-3 overflow-hidden">
                         {isActive ? logs.map((log, i) => (
-                            <div key={i} className="text-[9px] font-mono text-slate-400 border-l-2 border-blue-500/30 pl-2 animate-in fade-in slide-in-from-left duration-300">
+                            <div key={i} className="text-[9px] font-mono text-slate-400 border-l-2 border-blue-500/30 pl-2">
                                 {log}
                             </div>
                         )) : (
                             <div className="h-full flex items-center justify-center opacity-20">
-                                <p className="text-[9px] text-slate-500 font-mono text-center uppercase tracking-tighter">No Feed Activity</p>
+                                <p className="text-[9px] text-slate-500 font-mono text-center uppercase">No Activity</p>
                             </div>
                         )}
                     </div>

@@ -1,16 +1,33 @@
-# React + Vite
+# Crowd Guardian: AI-Based Public Safety & Risk Detection
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**HackItOut 2.0 Submission** **Problem Statement 1:** AI-Based Public Safety Monitoring & Risk Detection System
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📌 Project Overview
+Crowd Guardian is a real-time surveillance intelligence system designed for high-density public environments like metro stations, festivals, and markets. By leveraging computer vision, the system automatically counts individuals, monitors motion levels, and assesses environmental risk to prevent stampedes and safety hazards.
 
-## React Compiler
+## 🚀 Key Features
+- **Live Feed Analytics:** Real-time person detection via webcam or IP camera streams.
+- **Video Forensics:** Upload recorded surveillance footage for post-event crowd analysis.
+- **Dynamic Risk Assessment:** Automated risk levels (LOW, MEDIUM, HIGH) based on real-time density thresholds.
+- **Interactive Dashboard:** Live data visualization showing crowd trends and system logs.
+- **Optimized AI Pipeline:** Uses frame-skipping and AI resizing for smooth performance on standard hardware.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠 Tech Stack
+- **Frontend:** React.js, Tailwind CSS, Framer Motion (Animations)
+- **Backend:** Flask (Python)
+- **AI/ML Logic:** YOLOv8 (Ultralytics), OpenCV, PyTorch
+- **Data Visualization:** Chart.js
 
-## Expanding the ESLint configuration
+## ⚙️ Installation & Setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+- Python 3.8+
+- Node.js & npm
+
+### Backend Setup
+1. Navigate to the root directory.
+2. Install dependencies:
+   ```bash
+   pip install flask flask-cors opencv-python ultralytics torch

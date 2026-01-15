@@ -85,7 +85,7 @@ const VideoUpload = (props) => {
         </h2>
         {status !== "idle" && (
           <button onClick={handleRestart} className="px-5 py-2 text-xs font-bold bg-slate-800 text-slate-300 rounded-xl">
-            Restart
+            Terminate
           </button>
         )}
       </div>
@@ -104,7 +104,6 @@ const VideoUpload = (props) => {
 
         <div className="w-full lg:w-80 flex flex-col gap-4">
           <FeatureCard icon={faTriangleExclamation} title="Risk Factor" content={risk} desc="Crowd density & threat analysis" color={risk === "HIGH" ? "text-red-500" : "text-green-400"} />
-          <FeatureCard icon={faUsers} title="People Count" content={peopleCount} color="text-blue-400" desc="YOLOv8 person detection" />
           <FeatureCard icon={faPersonRunning} title="Motion Status" content={peopleCount > 0 ? "ACTIVE" : "IDLE"} color={peopleCount > 0 ? "text-green-400" : "text-slate-400"} desc="Movement detected" />
         </div>
       </div>

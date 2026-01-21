@@ -27,6 +27,7 @@ live_people_count = 0
 live_risk_level = "LOW"
 live_motion_status = "IDLE"
 cap = None
+cause = ""
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -66,7 +67,10 @@ def progress():
         "risk": ai.risk_level,
         "speed": float(ai.motion_speed),
         "coverage": float(ai.motion_coverage),
-        "motion": ai.motion_status
+        "motion": ai.motion_status,
+        "Primary_Cause":ai.main_signal,
+        "Risk_Score":ai.risk_score,
+
     })
 
 # ===============================
@@ -124,6 +128,7 @@ def live_progress():
         "people_count": live_people_count,
         "risk": live_risk_level,
         "motion": live_motion_status
+        # "Cause:":
     })
 
 @app.route("/stop_live")
